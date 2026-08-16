@@ -11,52 +11,32 @@
     <header class="topbar card">
       <section class="weather-summary" aria-label="Current weather">
         <div id="weatherIcon" class="weather-icon">☀️</div>
-        <div>
-          <div id="weatherTemp" class="weather-temp">--°</div>
-          <div id="weatherText" class="weather-text">Loading weather…</div>
-        </div>
+        <div><div id="weatherTemp" class="weather-temp">--°</div><div id="weatherText" class="weather-text">Loading weather…</div></div>
       </section>
       <div class="top-divider"></div>
       <div id="clock" class="clock"></div>
       <div class="top-divider"></div>
-      <div class="date-stack">
-        <div id="weekday" class="weekday"></div>
-        <div id="date" class="date"></div>
-      </div>
+      <div class="date-stack"><div id="weekday" class="weekday"></div><div id="date" class="date"></div></div>
       <div class="top-spacer"></div>
       <div class="location">📍 <span id="locationLabel">Blacksburg, VA</span></div>
     </header>
 
     <section class="content-grid">
       <section class="card calendar-card">
-        <div class="card-header">
-          <h1 id="monthTitle">Month</h1>
-        </div>
-        <div class="weekday-row">
-          <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-        </div>
+        <div class="card-header"><h1 id="monthTitle">Month</h1></div>
+        <div class="weekday-row"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div>
         <div id="calendarGrid" class="calendar-grid"></div>
       </section>
 
       <aside class="side-column">
-        <section class="card agenda-card">
-          <div class="card-header"><h2>Upcoming</h2></div>
-          <div id="agenda" class="agenda"></div>
-        </section>
-
-        <section class="card forecast-card">
-          <div class="card-header"><h2>Forecast</h2></div>
-          <div id="forecast" class="forecast"></div>
-        </section>
+        <section class="card agenda-card"><div class="card-header"><h2>Upcoming</h2></div><div id="agenda" class="agenda"></div></section>
+        <section class="card forecast-card"><div class="card-header"><h2>Forecast</h2></div><div id="forecast" class="forecast"></div></section>
+        <section class="card sports-card"><div class="sports-title">Sports</div><div id="sports" class="sports"></div></section>
       </aside>
     </section>
 
-    <footer class="footer">
-      <span id="status">Dashboard online</span>
-      <span>Auto-refreshes throughout the day ↻</span>
-    </footer>
+    <footer class="footer"><span id="status">Dashboard online</span><span>Calendar refreshes every minute ↻</span></footer>
   </main>
-
   <script src="app.js"></script>
 </body>
 </html>
