@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Home Dashboard Receiver</title>
   <script>
-    window.DASHBOARD_BUILD = new URLSearchParams(location.search).get('v') || '2026-08-16-1908';
+    window.DASHBOARD_BUILD = new URLSearchParams(location.search).get('v') || '2026-08-16-1916';
     document.write('<link rel="stylesheet" href="styles.css?v=' + encodeURIComponent(window.DASHBOARD_BUILD) + '">');
     document.write('<link rel="stylesheet" href="overrides.css?v=' + encodeURIComponent(window.DASHBOARD_BUILD) + '">');
   </script>
@@ -32,7 +32,7 @@
       </section>
 
       <aside class="side-column">
-        <section class="card agenda-card"><div class="card-header"><h2>Today & Tomorrow</h2></div><div id="agenda" class="agenda"></div></section>
+        <section class="card agenda-card"><div id="agenda" class="agenda"></div></section>
         <section class="card sports-card"><div class="sports-title">Sports</div><div id="sports" class="sports"></div></section>
       </aside>
     </section>
