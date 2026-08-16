@@ -6,34 +6,79 @@
   <title>Launch Home Dashboard</title>
   <style>
     body{font-family:Arial,Helvetica,sans-serif;background:#0b1220;color:#f7f9fc;display:grid;place-items:center;min-height:100vh;margin:0;padding:20px}
-    .panel{width:min(520px,100%);background:#121c2e;border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:26px;box-shadow:0 18px 45px rgba(0,0,0,.25);text-align:center}
+    .panel{width:min(560px,100%);background:#121c2e;border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:30px;box-shadow:0 18px 45px rgba(0,0,0,.25);text-align:center}
     h1{margin:0 0 8px} p{color:#9fb0c9;line-height:1.5}
-    .cast-wrap{display:flex;justify-content:center;margin-top:22px}.cast{width:76px;height:76px;--connected-color:#6ea8fe;--disconnected-color:#f7f9fc}
-    #status{text-align:center;margin-top:14px;color:#9fb0c9;font-size:14px}
+    button{width:100%;margin-top:20px;padding:16px;border:0;border-radius:12px;background:#6ea8fe;color:#08101d;font-size:18px;font-weight:800;cursor:pointer}
+    button:disabled{opacity:.45;cursor:not-allowed}
+    .cast-wrap{display:flex;justify-content:center;margin-top:18px}.cast{width:58px;height:58px;--connected-color:#6ea8fe;--disconnected-color:#f7f9fc}
+    #status{text-align:center;margin-top:16px;color:#9fb0c9;font-size:14px;line-height:1.45}
+    .small{font-size:12px;color:#71839d;margin-top:12px}
   </style>
   <script>
     const CAST_APP_ID = '03E19645';
+    let castReady = false;
+
+    function setStatus(text){
+      const el = document.getElementById('status');
+      if (el) el.textContent = text;
+    }
 
     window.__onGCastApiAvailable = function(isAvailable) {
-      const status = document.getElementById('status');
       if (!isAvailable) {
-        status.textContent = 'Google Cast is not available in this browser.';
+        setStatus('Google Cast is not available in this browser.');
         return;
       }
-      cast.framework.CastContext.getInstance().setOptions({
-        receiverApplicationId: CAST_APP_ID,
-        autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
-      });
-      status.textContent = 'Ready. Tap the Cast icon and choose your dashboard Chromecast.';
+      try {
+        const context = cast.framework.CastContext.getInstance();
+        context.setOptions({
+          receiverApplicationId: CAST_APP_ID,
+          autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+        });
+        context.addEventListener(cast.framework.CastContextEventType.CAST_STATE_CHANGED, event => {
+          const state = event.castState;
+          const button = document.getElementById('launchButton');
+          if (state === cast.framework.CastState.NO_DEVICES_AVAILABLE) {
+            button.disabled = true;
+            setStatus('No Cast devices are visible to this browser yet.');
+          } else if (state === cast.framework.CastState.CONNECTED) {
+            button.disabled = false;
+            setStatus('Connected. Home Dashboard should now be loading on the TV.');
+          } else {
+            button.disabled = false;
+            setStatus('Chromecast found. Click Launch Kitchen Dashboard.');
+          }
+        });
+        castReady = true;
+        document.getElementById('launchButton').disabled = false;
+        setStatus('Cast is ready. Looking for your Chromecast…');
+      } catch (error) {
+        setStatus('Cast initialization error: ' + error.message);
+      }
     };
+
+    async function launchDashboard(){
+      if (!castReady) {
+        setStatus('Cast is still loading. Wait a moment and try again.');
+        return;
+      }
+      try {
+        setStatus('Opening Chromecast chooser…');
+        await cast.framework.CastContext.getInstance().requestSession();
+        setStatus('Connected. Home Dashboard should now be loading on the TV.');
+      } catch (error) {
+        if (error !== 'cancel') setStatus('Could not start dashboard: ' + error);
+      }
+    }
   </script>
 </head>
 <body>
   <section class="panel">
     <h1>Home Dashboard</h1>
-    <p>Launch the always-on household dashboard on your registered Chromecast.</p>
+    <p>This launches our custom Home Dashboard receiver, not Chrome tab mirroring.</p>
+    <button id="launchButton" onclick="launchDashboard()" disabled>Launch Kitchen Dashboard</button>
     <div class="cast-wrap"><google-cast-launcher class="cast"></google-cast-launcher></div>
     <div id="status">Loading Google Cast…</div>
+    <div class="small">Cast App ID: 03E19645</div>
   </section>
   <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
 </body>
