@@ -88,6 +88,7 @@ function readCalendars_(configs, start, end, sportsMode) {
     calendar.getEvents(start, end).forEach(event => {
       const allDay = event.isAllDayEvent();
       const eventStart = event.getStartTime();
+      const eventEnd = event.getEndTime();
       output.push({
         title: event.getTitle(),
         calendar: config.label,
@@ -98,6 +99,7 @@ function readCalendars_(configs, start, end, sportsMode) {
         important: allDay,
         date: Utilities.formatDate(eventStart, Session.getScriptTimeZone(), 'yyyy-MM-dd'),
         start: allDay ? null : eventStart.toISOString(),
+        end: allDay ? null : eventEnd.toISOString(),
         time: allDay ? '' : Utilities.formatDate(eventStart, Session.getScriptTimeZone(), 'h:mm a')
       });
     });
