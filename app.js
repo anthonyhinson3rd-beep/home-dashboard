@@ -2,21 +2,23 @@ const CONFIG = {
   locationName: 'Blacksburg, VA',
   latitude: 37.2296,
   longitude: -80.4139,
-  timezone: 'America/New_York'
+  timezone: 'America/New_York',
+  calendarFeedUrl: ''
 };
 
 const CALENDAR_COLORS = {
   Shared: '#ffc21c',
   Anthony: '#168cff',
-  Megan: '#7fdc46',
-  Other: '#ad7df8'
+  Megan: '#6fca3c',
+  Other: '#9b72e8'
 };
 
 const sampleEvents = [
-  { offset: 0, time: '6:30 PM', title: 'Dinner', calendar: 'Shared' },
-  { offset: 1, time: '8:00 AM', title: 'Morning appointment', calendar: 'Anthony' },
-  { offset: 2, time: '5:30 PM', title: 'Workout', calendar: 'Megan' },
-  { offset: 4, time: '7:00 PM', title: 'Plans together', calendar: 'Other' }
+  { offset: 0, time: '', title: 'Household day', calendar: 'Shared', allDay: true },
+  { offset: 0, time: '6:30 PM', title: 'Dinner', calendar: 'Shared', allDay: false },
+  { offset: 1, time: '8:00 AM', title: 'Morning appointment', calendar: 'Anthony', allDay: false },
+  { offset: 2, time: '5:30 PM', title: 'Workout', calendar: 'Megan', allDay: false },
+  { offset: 4, time: '7:00 PM', title: 'Plans together', calendar: 'Other', allDay: false }
 ];
 
 function formatDateKey(date) {
@@ -34,7 +36,7 @@ function eventDate(offset) {
 }
 
 function eventColor(event) {
-  return CALENDAR_COLORS[event.calendar] || CALENDAR_COLORS.Other;
+  return event.color || CALENDAR_COLORS[event.calendar] || CALENDAR_COLORS.Other;
 }
 
 function formatRangeTitle(start, end) {
@@ -48,7 +50,7 @@ function formatRangeTitle(start, end) {
   return `${startText} – ${endText}`;
 }
 
-const events = sampleEvents.map(event => ({ ...event, date: eventDate(event.offset) }));
+let events = sampleEvents.map(event => ({ ...event, date: eventDate(event.offset) }));
 
 function updateClock() {
   const now = new Date();
@@ -62,11 +64,20 @@ function updateClock() {
   document.getElementById('locationLabel').textContent = CONFIG.locationName;
 }
 
+function eventSortValue(event) {
+  if (event.allDay) return -1;
+  if (event.start) return new Date(event.start).getTime();
+  const match = (event.time || '').match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!match) return Number.MAX_SAFE_INTEGER;
+  let h = Number(match[1]) % 12;
+  if (match[3].toUpperCase() === 'PM') h += 12;
+  return h * 60 + Number(match[2]);
+}
+
 function renderCalendar() {
   const now = new Date();
   now.setHours(12, 0, 0, 0);
 
-  // Keep the familiar Sun-Sat calendar columns while showing only four weeks.
   const start = new Date(now);
   start.setDate(now.getDate() - now.getDay());
 
@@ -94,19 +105,26 @@ function renderCalendar() {
 
     const matches = events
       .filter(e => formatDateKey(e.date) === formatDateKey(date))
-      .sort((a, b) => a.time.localeCompare(b.time));
+      .sort((a, b) => eventSortValue(a) - eventSortValue(b));
 
     const eventBox = document.createElement('div');
     eventBox.className = 'day-events';
+
     matches.slice(0, 7).forEach(event => {
       const row = document.createElement('div');
-      row.className = 'event-row';
-      row.innerHTML = `
-        <div class="event-wrap">
-          <span class="event-dot" style="background:${eventColor(event)}"></span>
-          <span class="event-time">${event.time}</span>
-        </div>
-        <span class="event-title">${event.title}</span>`;
+      if (event.allDay) {
+        row.className = 'event-row all-day';
+        row.style.borderLeftColor = eventColor(event);
+        row.textContent = event.title;
+      } else {
+        row.className = 'event-row';
+        row.innerHTML = `
+          <div class="event-wrap">
+            <span class="event-dot" style="background:${eventColor(event)}"></span>
+            <span class="event-time">${event.time}</span>
+          </div>
+          <span class="event-title">${event.title}</span>`;
+      }
       eventBox.appendChild(row);
     });
 
@@ -122,25 +140,123 @@ function renderCalendar() {
   }
 }
 
+function dayLabel(date, today) {
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+  if (formatDateKey(date) === formatDateKey(today)) return 'Today';
+  if (formatDateKey(date) === formatDateKey(tomorrow)) return 'Tomorrow';
+  return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+function appendAgendaSection(container, title, items) {
+  if (!items.length) return;
+  const heading = document.createElement('div');
+  heading.className = 'agenda-section-title';
+  heading.textContent = title;
+  container.appendChild(heading);
+
+  items.forEach(event => {
+    const row = document.createElement('div');
+    row.className = 'agenda-item';
+    const leftTime = event.allDay ? 'All day' : event.time;
+    row.innerHTML = `
+      <div class="agenda-date">
+        <span class="agenda-dot" style="background:${eventColor(event)}"></span>${leftTime}
+      </div>
+      <div><div class="agenda-title">${event.title}</div><div class="agenda-sub">${event.calendar}</div></div>`;
+    container.appendChild(row);
+  });
+}
+
 function renderAgenda() {
   const agenda = document.getElementById('agenda');
   agenda.innerHTML = '';
-  events
+
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+
+  const future = events
+    .filter(event => event.date >= today)
     .slice()
-    .sort((a, b) => a.date - b.date)
-    .slice(0, 6)
-    .forEach(event => {
-      const row = document.createElement('div');
-      row.className = 'agenda-item';
-      const when = event.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-      row.innerHTML = `
-        <div class="agenda-date">
-          <span class="agenda-dot" style="background:${eventColor(event)}"></span>${when}<br>
-          <span style="padding-left:16px">${event.time}</span>
-        </div>
-        <div><div class="agenda-title">${event.title}</div><div class="agenda-sub">${event.calendar}</div></div>`;
-      agenda.appendChild(row);
+    .sort((a, b) => {
+      const dateDiff = a.date - b.date;
+      return dateDiff || eventSortValue(a) - eventSortValue(b);
     });
+
+  const todayItems = future.filter(e => formatDateKey(e.date) === formatDateKey(today)).slice(0, 3);
+  const tomorrowItems = future.filter(e => formatDateKey(e.date) === formatDateKey(tomorrow)).slice(0, 3);
+  const used = new Set([...todayItems, ...tomorrowItems]);
+  const important = future.filter(e => !used.has(e) && (e.allDay || e.important)).slice(0, 2);
+
+  appendAgendaSection(agenda, 'Today', todayItems);
+  appendAgendaSection(agenda, 'Tomorrow', tomorrowItems);
+  appendAgendaSection(agenda, 'Next important', important);
+
+  if (!agenda.children.length) {
+    const empty = document.createElement('div');
+    empty.className = 'agenda-section-title';
+    empty.textContent = 'Nothing upcoming';
+    agenda.appendChild(empty);
+  }
+}
+
+function normalizeFeedEvent(item) {
+  const date = item.date ? new Date(`${item.date}T12:00:00`) : new Date(item.start);
+  return {
+    date,
+    start: item.start || null,
+    time: item.time || '',
+    title: item.title || 'Untitled event',
+    calendar: item.calendar || 'Other',
+    color: item.color || null,
+    allDay: Boolean(item.allDay),
+    important: Boolean(item.important)
+  };
+}
+
+function getCalendarFeedSettings() {
+  const params = new URLSearchParams(location.search);
+  return {
+    feed: params.get('feed') || CONFIG.calendarFeedUrl,
+    key: params.get('key') || ''
+  };
+}
+
+async function loadCalendarFeed() {
+  const { feed, key } = getCalendarFeedSettings();
+  if (!feed) return;
+
+  const callbackName = `homeDashboardCalendar_${Date.now()}`;
+  const script = document.createElement('script');
+  const separator = feed.includes('?') ? '&' : '?';
+
+  try {
+    const result = await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('Calendar feed timed out')), 12000);
+      window[callbackName] = payload => {
+        clearTimeout(timeout);
+        resolve(payload);
+      };
+      script.onerror = () => {
+        clearTimeout(timeout);
+        reject(new Error('Calendar feed failed to load'));
+      };
+      script.src = `${feed}${separator}callback=${encodeURIComponent(callbackName)}&key=${encodeURIComponent(key)}`;
+      document.head.appendChild(script);
+    });
+
+    if (!result || !Array.isArray(result.events)) throw new Error('Calendar feed returned invalid data');
+    events = result.events.map(normalizeFeedEvent);
+    renderCalendar();
+    renderAgenda();
+  } catch (error) {
+    console.error(error);
+  } finally {
+    delete window[callbackName];
+    script.remove();
+  }
 }
 
 function weatherCode(code, isDay = 1) {
@@ -199,9 +315,11 @@ async function loadWeather() {
 updateClock();
 renderCalendar();
 renderAgenda();
+loadCalendarFeed();
 loadWeather();
 setInterval(updateClock, 1000);
 setInterval(loadWeather, 15 * 60 * 1000);
+setInterval(loadCalendarFeed, 5 * 60 * 1000);
 setInterval(() => {
   renderCalendar();
   renderAgenda();
