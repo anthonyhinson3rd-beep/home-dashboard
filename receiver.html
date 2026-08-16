@@ -29,12 +29,8 @@
 
     <section class="content-grid">
       <section class="card calendar-card">
-        <div class="card-header">
-          <h1 id="monthTitle">Month</h1>
-        </div>
-        <div class="weekday-row">
-          <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-        </div>
+        <div class="card-header"><h1 id="monthTitle">Month</h1></div>
+        <div class="weekday-row"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div>
         <div id="calendarGrid" class="calendar-grid"></div>
       </section>
 
@@ -43,7 +39,6 @@
           <div class="card-header"><h2>Upcoming</h2></div>
           <div id="agenda" class="agenda"></div>
         </section>
-
         <section class="card forecast-card">
           <div class="card-header"><h2>Forecast</h2></div>
           <div id="forecast" class="forecast"></div>
@@ -57,14 +52,33 @@
     </footer>
   </main>
 
-  <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+  <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
   <script src="app.js"></script>
   <script>
+    const CONFIG_NAMESPACE = 'urn:x-cast:com.home.dashboard.config';
+
     window.addEventListener('load', () => {
       try {
         const context = cast.framework.CastReceiverContext.getInstance();
         const options = new cast.framework.CastReceiverOptions();
         options.disableIdleTimeout = true;
+
+        context.addCustomMessageListener(CONFIG_NAMESPACE, event => {
+          try {
+            const payload = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+            if (payload && payload.type === 'calendar-config' && payload.key) {
+              window.setHomeDashboardCalendarKey(payload.key);
+              context.sendCustomMessage(CONFIG_NAMESPACE, event.senderId, {
+                type: 'calendar-config-ack',
+                keyReceived: true,
+                keyLength: String(payload.key).length
+              });
+            }
+          } catch (error) {
+            console.error('Invalid dashboard config message', error);
+          }
+        });
+
         context.start(options);
       } catch (error) {
         console.error('Cast receiver initialization failed', error);
