@@ -20,105 +20,54 @@
     const CONFIG_NAMESPACE = 'urn:x-cast:com.home.dashboard.config';
     let context = null;
 
-    function setStatus(text){
-      const el = document.getElementById('status');
-      if (el) el.textContent = text;
-    }
-
-    function getKey(){
-      return document.getElementById('calendarKey').value.trim();
-    }
-
-    function saveKey(){
-      const key = getKey();
-      if (!key) {
-        setStatus('Enter your dashboard calendar key first.');
-        return false;
-      }
-      localStorage.setItem('homeDashboardCalendarKey', key);
-      return true;
-    }
+    function setStatus(text){ const el=document.getElementById('status'); if(el) el.textContent=text; }
+    function getKey(){ return document.getElementById('calendarKey').value.trim(); }
+    function saveKey(){ const key=getKey(); if(!key){setStatus('Enter your dashboard calendar key first.');return false;} localStorage.setItem('homeDashboardCalendarKey',key); return true; }
 
     async function sendCalendarConfig(session){
-      const key = getKey();
-      if (!key || !session) return;
+      const key=getKey();
+      if(!key||!session)return;
       setStatus('Sending calendar configuration to the TV…');
-      try {
-        const message = JSON.stringify({ type: 'calendar-config', key });
-        await session.sendMessage(CONFIG_NAMESPACE, message);
+      try{
+        // Cast framework expects a JSON-compatible object here. Passing an already
+        // stringified JSON value can be rejected as INVALID_PARAMETER.
+        const message={type:'calendar-config',key:key};
+        await session.sendMessage(CONFIG_NAMESPACE,message);
         setStatus('Calendar configuration sent. The TV should load your real calendar within a few seconds.');
-      } catch (error) {
-        setStatus('Connected, but configuration send failed: ' + (error?.message || error));
+      }catch(error){
+        const detail=error?.message||error?.code||String(error);
+        setStatus('Connected, but configuration send failed: '+detail);
       }
     }
 
-    window['__onGCastApiAvailable'] = function(isAvailable) {
-      if (!isAvailable) {
-        setStatus('Google Cast is not available in this browser.');
-        return;
-      }
-
-      try {
-        context = cast.framework.CastContext.getInstance();
-        context.setOptions({
-          receiverApplicationId: CAST_APP_ID,
-          autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+    window['__onGCastApiAvailable']=function(isAvailable){
+      if(!isAvailable){setStatus('Google Cast is not available in this browser.');return;}
+      try{
+        context=cast.framework.CastContext.getInstance();
+        context.setOptions({receiverApplicationId:CAST_APP_ID,autoJoinPolicy:chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED});
+        context.addEventListener(cast.framework.CastContextEventType.CAST_STATE_CHANGED,event=>{
+          const button=document.getElementById('launch');
+          if(event.castState===cast.framework.CastState.NO_DEVICES_AVAILABLE){button.disabled=true;button.textContent='Waiting for Kitchen TV…';setStatus('No compatible Cast receiver visible yet.');}
+          else if(event.castState===cast.framework.CastState.CONNECTED){button.disabled=false;button.textContent='Send Calendar Configuration';setStatus('Connected to Kitchen TV.');}
+          else{button.disabled=false;button.textContent='Launch Home Dashboard';setStatus('Kitchen TV is available.');}
         });
-
-        context.addEventListener(cast.framework.CastContextEventType.CAST_STATE_CHANGED, event => {
-          const button = document.getElementById('launch');
-          if (event.castState === cast.framework.CastState.NO_DEVICES_AVAILABLE) {
-            button.disabled = true;
-            button.textContent = 'Waiting for Kitchen TV…';
-            setStatus('No compatible Cast receiver visible yet.');
-          } else if (event.castState === cast.framework.CastState.CONNECTED) {
-            button.disabled = false;
-            button.textContent = 'Send Calendar Configuration';
-            setStatus('Connected to Kitchen TV.');
-          } else {
-            button.disabled = false;
-            button.textContent = 'Launch Home Dashboard';
-            setStatus('Kitchen TV is available.');
-          }
+        context.addEventListener(cast.framework.CastContextEventType.SESSION_STATE_CHANGED,async event=>{
+          if(event.sessionState===cast.framework.SessionState.SESSION_STARTED||event.sessionState===cast.framework.SessionState.SESSION_RESUMED){await sendCalendarConfig(context.getCurrentSession());}
+          if(event.sessionState===cast.framework.SessionState.SESSION_START_FAILED){setStatus('Receiver launch failed: '+(event.errorCode||'unknown error'));}
         });
-
-        context.addEventListener(cast.framework.CastContextEventType.SESSION_STATE_CHANGED, async event => {
-          if (event.sessionState === cast.framework.SessionState.SESSION_STARTED || event.sessionState === cast.framework.SessionState.SESSION_RESUMED) {
-            await sendCalendarConfig(context.getCurrentSession());
-          }
-          if (event.sessionState === cast.framework.SessionState.SESSION_START_FAILED) {
-            setStatus('Receiver launch failed: ' + (event.errorCode || 'unknown error'));
-          }
-        });
-
-        const saved = localStorage.getItem('homeDashboardCalendarKey') || '';
-        document.getElementById('calendarKey').value = saved;
+        const saved=localStorage.getItem('homeDashboardCalendarKey')||'';
+        document.getElementById('calendarKey').value=saved;
         setStatus('Cast initialized.');
-      } catch (error) {
-        setStatus('Cast initialization failed: ' + error.message);
-      }
+      }catch(error){setStatus('Cast initialization failed: '+error.message);}
     };
 
     async function launchDashboard(){
-      if (!saveKey()) return;
-      if (!context) {
-        setStatus('Cast is still initializing.');
-        return;
-      }
-
-      const existing = context.getCurrentSession();
-      if (existing) {
-        await sendCalendarConfig(existing);
-        return;
-      }
-
-      try {
-        setStatus('Opening Cast chooser…');
-        await context.requestSession();
-      } catch (error) {
-        const value = error?.message || error?.code || String(error);
-        if (value !== 'cancel') setStatus('Could not start Cast session: ' + value);
-      }
+      if(!saveKey())return;
+      if(!context){setStatus('Cast is still initializing.');return;}
+      const existing=context.getCurrentSession();
+      if(existing){await sendCalendarConfig(existing);return;}
+      try{setStatus('Opening Cast chooser…');await context.requestSession();}
+      catch(error){const value=error?.message||error?.code||String(error);if(value!=='cancel')setStatus('Could not start Cast session: '+value);}
     }
   </script>
 </head>
@@ -126,15 +75,12 @@
   <section class="panel">
     <h1>Home Dashboard</h1>
     <p>Launch the dashboard and securely send the calendar key directly to the Chromecast. The key is stored only in this browser's local storage, not in the public GitHub repository.</p>
-
     <label for="calendarKey">Dashboard calendar key</label>
     <input id="calendarKey" type="password" autocomplete="off" placeholder="Paste the key from Apps Script" />
-
     <button id="launch" onclick="launchDashboard()" disabled>Waiting for Cast…</button>
     <div id="status">Loading Google Cast…</div>
     <div class="small">Custom Receiver App ID: 03E19645</div>
   </section>
-
   <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
 </body>
 </html>
