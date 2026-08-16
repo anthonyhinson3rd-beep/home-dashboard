@@ -6,63 +6,35 @@
   <title>Launch Home Dashboard</title>
   <style>
     body{font-family:Arial,Helvetica,sans-serif;background:#0b1220;color:#f7f9fc;display:grid;place-items:center;min-height:100vh;margin:0;padding:20px}
-    .panel{width:min(520px,100%);background:#121c2e;border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:26px;box-shadow:0 18px 45px rgba(0,0,0,.25)}
-    h1{margin:0 0 8px} p{color:#9fb0c9;line-height:1.5} label{display:block;margin-top:18px;margin-bottom:7px;font-weight:700}
-    input{width:100%;box-sizing:border-box;padding:13px 14px;border-radius:10px;border:1px solid #33435b;background:#0b1220;color:white;font-size:16px}
-    button{margin-top:12px;width:100%;padding:13px;border:0;border-radius:10px;background:#6ea8fe;color:#08101d;font-weight:800;font-size:16px;cursor:pointer}
-    .cast-wrap{display:flex;justify-content:center;margin-top:22px}.cast{width:64px;height:64px;--connected-color:#6ea8fe;--disconnected-color:#f7f9fc}
-    #status{text-align:center;margin-top:12px;color:#9fb0c9;font-size:14px}
+    .panel{width:min(520px,100%);background:#121c2e;border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:26px;box-shadow:0 18px 45px rgba(0,0,0,.25);text-align:center}
+    h1{margin:0 0 8px} p{color:#9fb0c9;line-height:1.5}
+    .cast-wrap{display:flex;justify-content:center;margin-top:22px}.cast{width:76px;height:76px;--connected-color:#6ea8fe;--disconnected-color:#f7f9fc}
+    #status{text-align:center;margin-top:14px;color:#9fb0c9;font-size:14px}
   </style>
   <script>
+    const CAST_APP_ID = '03E19645';
+
     window.__onGCastApiAvailable = function(isAvailable) {
-      if (!isAvailable) {
-        document.getElementById('status').textContent = 'Google Cast is not available in this browser.';
-        return;
-      }
-      initCast();
-    };
-
-    function currentAppId(){
-      const params = new URLSearchParams(location.search);
-      return params.get('appId') || localStorage.getItem('homeDashboardCastAppId') || '';
-    }
-
-    function initCast(){
-      const appId = currentAppId();
       const status = document.getElementById('status');
-      if (!appId) {
-        status.textContent = 'Enter the Cast Application ID first.';
+      if (!isAvailable) {
+        status.textContent = 'Google Cast is not available in this browser.';
         return;
       }
       cast.framework.CastContext.getInstance().setOptions({
-        receiverApplicationId: appId,
+        receiverApplicationId: CAST_APP_ID,
         autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
       });
-      status.textContent = 'Ready. Tap the Cast icon and choose Home Dashboard.';
-    }
-
-    function saveAppId(){
-      const value = document.getElementById('appId').value.trim();
-      if (!value) return;
-      localStorage.setItem('homeDashboardCastAppId', value);
-      location.reload();
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('appId').value = currentAppId();
-    });
+      status.textContent = 'Ready. Tap the Cast icon and choose your dashboard Chromecast.';
+    };
   </script>
 </head>
 <body>
   <section class="panel">
     <h1>Home Dashboard</h1>
-    <p>This page launches the custom dashboard receiver on your Chromecast. You only need to save the Google Cast Application ID once on this device.</p>
-    <label for="appId">Cast Application ID</label>
-    <input id="appId" autocomplete="off" placeholder="Example: ABCD1234" />
-    <button onclick="saveAppId()">Save Application ID</button>
+    <p>Launch the always-on household dashboard on your registered Chromecast.</p>
     <div class="cast-wrap"><google-cast-launcher class="cast"></google-cast-launcher></div>
     <div id="status">Loading Google Cast…</div>
   </section>
-  <script src="//www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
+  <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
 </body>
 </html>
