@@ -41,12 +41,8 @@ function eventColor(event) {
 
 function formatRangeTitle(start, end) {
   const sameYear = start.getFullYear() === end.getFullYear();
-  const startText = start.toLocaleDateString('en-US', {
-    month: 'long', day: 'numeric', year: sameYear ? undefined : 'numeric'
-  });
-  const endText = end.toLocaleDateString('en-US', {
-    month: 'long', day: 'numeric', year: 'numeric'
-  });
+  const startText = start.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: sameYear ? undefined : 'numeric' });
+  const endText = end.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   return `${startText} – ${endText}`;
 }
 
@@ -54,13 +50,9 @@ let events = sampleEvents.map(event => ({ ...event, date: eventDate(event.offset
 
 function updateClock() {
   const now = new Date();
-  document.getElementById('clock').textContent = now.toLocaleTimeString('en-US', {
-    hour: 'numeric', minute: '2-digit'
-  });
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   document.getElementById('weekday').textContent = now.toLocaleDateString('en-US', { weekday: 'long' });
-  document.getElementById('date').textContent = now.toLocaleDateString('en-US', {
-    month: 'long', day: 'numeric', year: 'numeric'
-  });
+  document.getElementById('date').textContent = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   document.getElementById('locationLabel').textContent = CONFIG.locationName;
 }
 
@@ -166,7 +158,10 @@ function normalizeFeedEvent(item) {
 
 function getCalendarFeedSettings() {
   const params = new URLSearchParams(location.search);
-  return { feed: params.get('feed') || CONFIG.calendarFeedUrl, key: params.get('key') || '' };
+  return {
+    feed: params.get('feed') || CONFIG.calendarFeedUrl,
+    key: window.HOME_DASHBOARD_CALENDAR_KEY || params.get('key') || ''
+  };
 }
 
 function setCalendarStatus(message) {
@@ -182,8 +177,11 @@ async function loadCalendarFeed() {
     setCalendarStatus(`Calendar diagnostic • key detected: ${keyDetected ? 'YES' : 'NO'} • key length: ${keyLength} • no feed URL`);
     return;
   }
-  setCalendarStatus(`Calendar diagnostic • key detected: ${keyDetected ? 'YES' : 'NO'} • key length: ${keyLength} • contacting feed…`);
-
+  if (!keyDetected) {
+    setCalendarStatus('Calendar waiting for secure Cast configuration…');
+    return;
+  }
+  setCalendarStatus(`Calendar diagnostic • key detected: YES • key length: ${keyLength} • contacting feed…`);
   const callbackName = `homeDashboardCalendar_${Date.now()}`;
   const script = document.createElement('script');
   const separator = feed.includes('?') ? '&' : '?';
@@ -196,22 +194,27 @@ async function loadCalendarFeed() {
       document.head.appendChild(script);
     });
     if (result && result.error) {
-      setCalendarStatus(`Calendar diagnostic • key detected: ${keyDetected ? 'YES' : 'NO'} • key length: ${keyLength} • server: ${result.error}`);
+      setCalendarStatus(`Calendar diagnostic • key detected: YES • key length: ${keyLength} • server: ${result.error}`);
       return;
     }
     if (!result || !Array.isArray(result.events)) throw new Error('invalid feed data');
     events = result.events.map(normalizeFeedEvent);
     renderCalendar();
     renderAgenda();
-    setCalendarStatus(`Calendar connected • key detected: ${keyDetected ? 'YES' : 'NO'} • key length: ${keyLength} • ${events.length} events loaded`);
+    setCalendarStatus(`Calendar connected • ${events.length} events loaded`);
   } catch (error) {
-    setCalendarStatus(`Calendar diagnostic • key detected: ${keyDetected ? 'YES' : 'NO'} • key length: ${keyLength} • error: ${error.message}`);
+    setCalendarStatus(`Calendar error: ${error.message}`);
     console.error(error);
   } finally {
     delete window[callbackName];
     script.remove();
   }
 }
+
+window.setHomeDashboardCalendarKey = function(key) {
+  window.HOME_DASHBOARD_CALENDAR_KEY = String(key || '');
+  loadCalendarFeed();
+};
 
 function weatherCode(code, isDay = 1) {
   if (code === 0) return { icon: isDay ? '☀️' : '🌙', text: 'Clear' };
