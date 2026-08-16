@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Home Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="dashboard" aria-label="Home dashboard">
+    <header class="topbar">
+      <div>
+        <div id="date" class="date"></div>
+        <div id="clock" class="clock"></div>
+      </div>
+      <section class="weather-summary" aria-label="Current weather">
+        <div id="weatherIcon" class="weather-icon">☀️</div>
+        <div>
+          <div id="weatherTemp" class="weather-temp">--°</div>
+          <div id="weatherText" class="weather-text">Loading weather…</div>
+        </div>
+      </section>
+    </header>
+
+    <section class="content-grid">
+      <section class="card calendar-card">
+        <div class="card-header">
+          <h1 id="monthTitle">Month</h1>
+          <div id="locationLabel" class="muted">Blacksburg, VA</div>
+        </div>
+        <div class="weekday-row">
+          <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+        </div>
+        <div id="calendarGrid" class="calendar-grid"></div>
+      </section>
+
+      <aside class="side-column">
+        <section class="card agenda-card">
+          <div class="card-header"><h2>Upcoming</h2></div>
+          <div id="agenda" class="agenda"></div>
+        </section>
+
+        <section class="card forecast-card">
+          <div class="card-header"><h2>Forecast</h2></div>
+          <div id="forecast" class="forecast"></div>
+        </section>
+      </aside>
+    </section>
+
+    <footer class="footer">
+      <span id="status">Dashboard online</span>
+      <span>Auto-refreshes throughout the day</span>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
