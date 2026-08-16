@@ -3,7 +3,7 @@ const CONFIG = {
   latitude: 37.2296,
   longitude: -80.4139,
   timezone: 'America/New_York',
-  calendarFeedUrl: ''
+  calendarFeedUrl: 'https://script.google.com/macros/s/AKfycbyKgHqynYULXBm8FCTn8FdsY0EvL3rjyfYk4kI_hTUWgghhzGIt3vABik8QfrD9uyBklg/exec'
 };
 
 const CALENDAR_COLORS = {
@@ -248,10 +248,12 @@ async function loadCalendarFeed() {
     });
 
     if (!result || !Array.isArray(result.events)) throw new Error('Calendar feed returned invalid data');
+    if (result.error) throw new Error(`Calendar feed: ${result.error}`);
     events = result.events.map(normalizeFeedEvent);
     renderCalendar();
     renderAgenda();
   } catch (error) {
+    document.getElementById('status').textContent = `Calendar: ${error.message}`;
     console.error(error);
   } finally {
     delete window[callbackName];
