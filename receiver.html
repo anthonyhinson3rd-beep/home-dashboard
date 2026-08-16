@@ -8,11 +8,7 @@
 </head>
 <body>
   <main class="dashboard" aria-label="Home dashboard">
-    <header class="topbar">
-      <div>
-        <div id="date" class="date"></div>
-        <div id="clock" class="clock"></div>
-      </div>
+    <header class="topbar card">
       <section class="weather-summary" aria-label="Current weather">
         <div id="weatherIcon" class="weather-icon">☀️</div>
         <div>
@@ -20,13 +16,21 @@
           <div id="weatherText" class="weather-text">Loading weather…</div>
         </div>
       </section>
+      <div class="top-divider"></div>
+      <div id="clock" class="clock"></div>
+      <div class="top-divider"></div>
+      <div class="date-stack">
+        <div id="weekday" class="weekday"></div>
+        <div id="date" class="date"></div>
+      </div>
+      <div class="top-spacer"></div>
+      <div class="location">📍 <span id="locationLabel">Blacksburg, VA</span></div>
     </header>
 
     <section class="content-grid">
       <section class="card calendar-card">
         <div class="card-header">
           <h1 id="monthTitle">Month</h1>
-          <div id="locationLabel" class="muted">Blacksburg, VA</div>
         </div>
         <div class="weekday-row">
           <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
@@ -62,7 +66,6 @@
         const options = new cast.framework.CastReceiverOptions();
         options.disableIdleTimeout = true;
         context.start(options);
-        console.log('Cast receiver started');
       } catch (error) {
         console.error('Cast receiver initialization failed', error);
       }
