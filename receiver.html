@@ -62,10 +62,12 @@
         const context = cast.framework.CastReceiverContext.getInstance();
         const options = new cast.framework.CastReceiverOptions();
         options.disableIdleTimeout = true;
+        options.customNamespaces = {};
+        options.customNamespaces[CONFIG_NAMESPACE] = cast.framework.system.MessageType.JSON;
 
         context.addCustomMessageListener(CONFIG_NAMESPACE, event => {
           try {
-            const payload = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+            const payload = event.data;
             if (payload && payload.type === 'calendar-config' && payload.key) {
               window.setHomeDashboardCalendarKey(payload.key);
               context.sendCustomMessage(CONFIG_NAMESPACE, event.senderId, {
