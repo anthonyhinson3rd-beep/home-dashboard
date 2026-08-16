@@ -5,11 +5,18 @@ const CONFIG = {
   timezone: 'America/New_York'
 };
 
+const CALENDAR_COLORS = {
+  Shared: '#ffc21c',
+  Anthony: '#168cff',
+  Megan: '#7fdc46',
+  Other: '#ad7df8'
+};
+
 const sampleEvents = [
   { offset: 0, time: '6:30 PM', title: 'Dinner', calendar: 'Shared' },
   { offset: 1, time: '8:00 AM', title: 'Morning appointment', calendar: 'Anthony' },
-  { offset: 2, time: '5:30 PM', title: 'Workout', calendar: 'Anthony' },
-  { offset: 4, time: '7:00 PM', title: 'Plans together', calendar: 'Shared' }
+  { offset: 2, time: '5:30 PM', title: 'Workout', calendar: 'Megan' },
+  { offset: 4, time: '7:00 PM', title: 'Plans together', calendar: 'Other' }
 ];
 
 function formatDateKey(date) {
@@ -26,6 +33,10 @@ function eventDate(offset) {
   return d;
 }
 
+function eventColor(event) {
+  return CALENDAR_COLORS[event.calendar] || CALENDAR_COLORS.Other;
+}
+
 const events = sampleEvents.map(event => ({ ...event, date: eventDate(event.offset) }));
 
 function updateClock() {
@@ -33,9 +44,11 @@ function updateClock() {
   document.getElementById('clock').textContent = now.toLocaleTimeString('en-US', {
     hour: 'numeric', minute: '2-digit'
   });
+  document.getElementById('weekday').textContent = now.toLocaleDateString('en-US', { weekday: 'long' });
   document.getElementById('date').textContent = now.toLocaleDateString('en-US', {
-    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+    month: 'long', day: 'numeric', year: 'numeric'
   });
+  document.getElementById('locationLabel').textContent = CONFIG.locationName;
 }
 
 function renderCalendar() {
@@ -43,7 +56,6 @@ function renderCalendar() {
   const year = now.getFullYear();
   const month = now.getMonth();
   document.getElementById('monthTitle').textContent = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  document.getElementById('locationLabel').textContent = CONFIG.locationName;
 
   const first = new Date(year, month, 1);
   const start = new Date(year, month, 1 - first.getDay());
@@ -63,14 +75,32 @@ function renderCalendar() {
     num.textContent = date.getDate();
     cell.appendChild(num);
 
-    const matches = events.filter(e => formatDateKey(e.date) === formatDateKey(date));
-    matches.slice(0, 2).forEach(event => {
-      const chip = document.createElement('div');
-      chip.className = 'event-chip';
-      chip.textContent = event.title;
-      cell.appendChild(chip);
+    const matches = events
+      .filter(e => formatDateKey(e.date) === formatDateKey(date))
+      .sort((a, b) => a.time.localeCompare(b.time));
+
+    const eventBox = document.createElement('div');
+    eventBox.className = 'day-events';
+    matches.slice(0, 5).forEach(event => {
+      const row = document.createElement('div');
+      row.className = 'event-row';
+      row.innerHTML = `
+        <div class="event-wrap">
+          <span class="event-dot" style="background:${eventColor(event)}"></span>
+          <span class="event-time">${event.time}</span>
+        </div>
+        <span class="event-title">${event.title}</span>`;
+      eventBox.appendChild(row);
     });
 
+    if (matches.length > 5) {
+      const more = document.createElement('div');
+      more.className = 'more-events';
+      more.textContent = `+${matches.length - 5} more`;
+      eventBox.appendChild(more);
+    }
+
+    cell.appendChild(eventBox);
     grid.appendChild(cell);
   }
 }
@@ -81,12 +111,16 @@ function renderAgenda() {
   events
     .slice()
     .sort((a, b) => a.date - b.date)
+    .slice(0, 6)
     .forEach(event => {
       const row = document.createElement('div');
       row.className = 'agenda-item';
       const when = event.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
       row.innerHTML = `
-        <div class="agenda-time"><strong>${when}</strong><br>${event.time}</div>
+        <div class="agenda-date">
+          <span class="agenda-dot" style="background:${eventColor(event)}"></span>${when}<br>
+          <span style="padding-left:16px">${event.time}</span>
+        </div>
         <div><div class="agenda-title">${event.title}</div><div class="agenda-sub">${event.calendar}</div></div>`;
       agenda.appendChild(row);
     });
@@ -112,7 +146,7 @@ async function loadWeather() {
     daily: 'weather_code,temperature_2m_max,temperature_2m_min',
     temperature_unit: 'fahrenheit',
     timezone: CONFIG.timezone,
-    forecast_days: '4'
+    forecast_days: '5'
   });
 
   try {
@@ -137,7 +171,7 @@ async function loadWeather() {
         <div class="forecast-temp">${Math.round(data.daily.temperature_2m_max[i])}° / ${Math.round(data.daily.temperature_2m_min[i])}°</div>`;
       forecast.appendChild(item);
     });
-    document.getElementById('status').textContent = `Weather updated ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+    document.getElementById('status').textContent = `Weather updated: ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
   } catch (error) {
     document.getElementById('weatherText').textContent = 'Weather unavailable';
     document.getElementById('status').textContent = 'Dashboard online • weather retrying';
