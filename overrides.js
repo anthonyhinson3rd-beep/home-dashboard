@@ -2,8 +2,6 @@
 (function () {
   const STORAGE_KEY = 'homeDashboardCalendarKey';
 
-  // Keep the calendar key on the receiver so a normal page reload does not
-  // require the sender to configure it again.
   const originalSetter = window.setHomeDashboardCalendarKey;
   window.setHomeDashboardCalendarKey = function (key) {
     const value = String(key || '');
@@ -23,8 +21,6 @@
     }
   } catch (_) {}
 
-  // The F1 calendar uses short prefixes such as FP1:, SRQ:, SR:, Q:, and GP:.
-  // Only show the session name on-screen, never the repeated Grand Prix title.
   window.f1SessionName = function (title) {
     const t = String(title || '').trim();
     if (/^FP1\s*:/i.test(t)) return 'FP1';
@@ -61,7 +57,7 @@
     if (f1.length) {
       f1Card.innerHTML = `
         <div class="sport-head compact-f1-head">
-          ${sportsLogo('F1')}
+          <div class="sport-logo f1-logo" aria-label="Formula 1"></div>
           <div class="sport-name">Formula 1</div>
         </div>
         <div class="f1-sessions compact-f1-sessions">
@@ -75,7 +71,7 @@
     } else {
       f1Card.innerHTML = `
         <div class="sport-head compact-f1-head">
-          ${sportsLogo('F1')}
+          <div class="sport-logo f1-logo" aria-label="Formula 1"></div>
           <div>
             <div class="sport-name">Formula 1</div>
             <div class="sport-subtitle">Calendar linked • no upcoming weekend</div>
@@ -84,17 +80,29 @@
     }
     box.appendChild(f1Card);
 
-    [['PSUF', 'PSU Football'], ['PSUW', 'PSU Wrestling']].forEach(([kind, label]) => {
+    const otherTitle = document.createElement('div');
+    otherTitle.className = 'other-sports-title';
+    otherTitle.textContent = 'Other Sports';
+    box.appendChild(otherTitle);
+
+    [
+      ['PSU Football', 'Schedule feed coming next'],
+      ['PSU Wrestling', 'Schedule feed coming next']
+    ].forEach(([label, subtitle]) => {
       const card = document.createElement('div');
-      card.className = 'sport-card psu-card';
-      card.innerHTML = `<div class="sport-head">${sportsLogo(kind)}<div><div class="sport-name">${label}</div><div class="sport-subtitle">Schedule feed coming next</div></div></div>`;
+      card.className = 'sport-card other-sport-card';
+      card.innerHTML = `
+        <div class="other-sport-row">
+          <div class="other-sport-accent"></div>
+          <div>
+            <div class="sport-name">${label}</div>
+            <div class="sport-subtitle">${subtitle}</div>
+          </div>
+        </div>`;
       box.appendChild(card);
     });
   };
 
-  // If the page itself gets into a stale state while the receiver is still
-  // running, recover locally. This cannot launch the receiver after a full
-  // Chromecast reboot; the LAN watchdog handles that part.
   let lastHealthy = Date.now();
   const originalStatus = window.setCalendarStatus;
   window.setCalendarStatus = function (message) {
