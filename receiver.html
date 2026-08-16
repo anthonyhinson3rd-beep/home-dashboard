@@ -4,8 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Home Dashboard Receiver</title>
-  <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="overrides.css" />
+  <script>
+    window.DASHBOARD_BUILD = new URLSearchParams(location.search).get('v') || '2026-08-16-1908';
+    document.write('<link rel="stylesheet" href="styles.css?v=' + encodeURIComponent(window.DASHBOARD_BUILD) + '">');
+    document.write('<link rel="stylesheet" href="overrides.css?v=' + encodeURIComponent(window.DASHBOARD_BUILD) + '">');
+  </script>
 </head>
 <body>
   <main class="dashboard" aria-label="Home dashboard">
@@ -38,10 +41,24 @@
   </main>
 
   <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
-  <script src="app.js"></script>
-  <script src="overrides.js"></script>
+  <script>document.write('<script src="app.js?v=' + encodeURIComponent(window.DASHBOARD_BUILD) + '"><\/script>');</script>
+  <script>document.write('<script src="overrides.js?v=' + encodeURIComponent(window.DASHBOARD_BUILD) + '"><\/script>');</script>
   <script>
     const CONFIG_NAMESPACE = 'urn:x-cast:com.home.dashboard.config';
+
+    async function checkForDashboardUpdate() {
+      try {
+        const response = await fetch('build-version.txt?_=' + Date.now(), { cache: 'no-store' });
+        if (!response.ok) return;
+        const latest = (await response.text()).trim();
+        if (latest && latest !== window.DASHBOARD_BUILD) {
+          const next = new URL(location.href);
+          next.searchParams.set('v', latest);
+          location.replace(next.toString());
+        }
+      } catch (_) {}
+    }
+
     window.addEventListener('load', () => {
       try {
         const context = cast.framework.CastReceiverContext.getInstance();
@@ -60,6 +77,9 @@
         });
         context.start(options);
       } catch (error) { console.error('Cast receiver initialization failed', error); }
+
+      setTimeout(checkForDashboardUpdate, 15000);
+      setInterval(checkForDashboardUpdate, 60000);
     });
   </script>
 </body>
