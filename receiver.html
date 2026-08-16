@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Home Dashboard Receiver</title>
   <script>
-    window.DASHBOARD_BUILD = new URLSearchParams(location.search).get('v') || '2026-08-16-1916';
+    window.DASHBOARD_BUILD = new URLSearchParams(location.search).get('v') || '2026-08-16-1924';
     document.write('<link rel="stylesheet" href="styles.css?v=' + encodeURIComponent(window.DASHBOARD_BUILD) + '">');
     document.write('<link rel="stylesheet" href="overrides.css?v=' + encodeURIComponent(window.DASHBOARD_BUILD) + '">');
   </script>
@@ -37,7 +37,16 @@
       </aside>
     </section>
 
-    <footer class="footer"><span id="status">Chromecast receiver online</span><span>Calendar refreshes every minute ↻</span></footer>
+    <footer class="footer">
+      <span id="status">Chromecast receiver online</span>
+      <div class="calendar-legend" aria-label="Calendar color legend">
+        <span><i style="background:#ef4f78"></i>Love</span>
+        <span><i style="background:#2f80ed"></i>Anthony</span>
+        <span><i style="background:#39a96b"></i>Megan</span>
+        <span><i style="background:#8d63d6"></i>Hamm</span>
+      </div>
+      <span>Calendar refreshes every minute ↻</span>
+    </footer>
   </main>
 
   <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
