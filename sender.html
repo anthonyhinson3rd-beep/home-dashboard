@@ -8,70 +8,89 @@
     body{font-family:Arial,Helvetica,sans-serif;background:#0b1220;color:#f7f9fc;display:grid;place-items:center;min-height:100vh;margin:0;padding:20px}
     .panel{width:min(560px,100%);background:#121c2e;border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:30px;box-shadow:0 18px 45px rgba(0,0,0,.25);text-align:center}
     h1{margin:0 0 8px} p{color:#9fb0c9;line-height:1.5}
-    .launch-row{margin:26px auto 10px;display:flex;align-items:center;justify-content:center;gap:16px}
-    google-cast-launcher{width:72px;height:72px;--connected-color:#6ea8fe;--disconnected-color:#f7f9fc}
-    .label{font-size:18px;font-weight:800}
+    button{width:100%;margin-top:22px;padding:17px;border:0;border-radius:12px;background:#6ea8fe;color:#08101d;font-size:19px;font-weight:800;cursor:pointer}
+    button:disabled{opacity:.45;cursor:not-allowed}
     #status{margin-top:18px;color:#9fb0c9;font-size:14px;line-height:1.45}
     .small{font-size:12px;color:#71839d;margin-top:12px}
   </style>
   <script>
     const CAST_APP_ID = '03E19645';
+    let context = null;
 
     function setStatus(text){
       const el = document.getElementById('status');
       if (el) el.textContent = text;
     }
 
+    function setButton(enabled, text){
+      const b = document.getElementById('launch');
+      if (!b) return;
+      b.disabled = !enabled;
+      if (text) b.textContent = text;
+    }
+
     window['__onGCastApiAvailable'] = function(isAvailable) {
       if (!isAvailable) {
-        setStatus('Google Cast is not available in this browser.');
+        setStatus('Google Cast is unavailable in this browser.');
         return;
       }
 
-      const context = cast.framework.CastContext.getInstance();
-      context.setOptions({
-        receiverApplicationId: CAST_APP_ID,
-        autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
-      });
+      try {
+        context = cast.framework.CastContext.getInstance();
+        context.setOptions({
+          receiverApplicationId: CAST_APP_ID,
+          autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+        });
 
-      context.addEventListener(cast.framework.CastContextEventType.CAST_STATE_CHANGED, function(event) {
-        switch (event.castState) {
-          case cast.framework.CastState.NO_DEVICES_AVAILABLE:
-            setStatus('No compatible Cast device is currently available for this app.');
-            break;
-          case cast.framework.CastState.NOT_CONNECTED:
-            setStatus('Kitchen TV found. Click the Cast icon above, then choose Kitchen TV.');
-            break;
-          case cast.framework.CastState.CONNECTING:
-            setStatus('Connecting to Kitchen TV…');
-            break;
-          case cast.framework.CastState.CONNECTED:
-            setStatus('Connected. The Home Dashboard receiver is running on the TV.');
-            break;
-          default:
-            setStatus('Cast initialized. Click the Cast icon above.');
-        }
-      });
+        context.addEventListener(cast.framework.CastContextEventType.CAST_STATE_CHANGED, function(event) {
+          if (event.castState === cast.framework.CastState.NO_DEVICES_AVAILABLE) {
+            setButton(false, 'Waiting for Kitchen TV…');
+            setStatus('The Cast SDK has not found a compatible receiver yet.');
+          } else if (event.castState === cast.framework.CastState.CONNECTED) {
+            setButton(true, 'Dashboard Connected');
+            const session = context.getCurrentSession();
+            const name = session && session.getCastDevice ? session.getCastDevice().friendlyName : 'Kitchen TV';
+            setStatus('Connected to ' + name + '. The dashboard should be loading on the TV.');
+          } else {
+            setButton(true, 'Launch Home Dashboard');
+            setStatus('Kitchen TV is available. Click the button to launch our custom receiver.');
+          }
+        });
 
-      context.addEventListener(cast.framework.CastContextEventType.SESSION_STATE_CHANGED, function(event) {
-        if (event.sessionState === cast.framework.SessionState.SESSION_START_FAILED) {
-          setStatus('Receiver launch failed: ' + (event.errorCode || 'unknown error'));
-        }
-      });
+        context.addEventListener(cast.framework.CastContextEventType.SESSION_STATE_CHANGED, function(event) {
+          if (event.sessionState === cast.framework.SessionState.SESSION_STARTING) setStatus('Starting Home Dashboard on Kitchen TV…');
+          if (event.sessionState === cast.framework.SessionState.SESSION_STARTED) setStatus('Success. Home Dashboard is running on Kitchen TV.');
+          if (event.sessionState === cast.framework.SessionState.SESSION_START_FAILED) setStatus('Receiver launch failed: ' + (event.errorCode || 'unknown error'));
+        });
 
-      setStatus('Cast initialized. Waiting for Kitchen TV…');
+        setStatus('Cast initialized. Searching for Kitchen TV…');
+      } catch (e) {
+        setStatus('Cast setup error: ' + e.message);
+      }
     };
+
+    async function launch(){
+      if (!context) {
+        setStatus('Cast is still initializing. Try again in a moment.');
+        return;
+      }
+      try {
+        setStatus('Opening the Cast device chooser…');
+        await context.requestSession();
+      } catch (e) {
+        const code = e && (e.code || e.errorCode || e.message) ? (e.code || e.errorCode || e.message) : String(e);
+        if (code !== 'cancel') setStatus('Could not launch receiver: ' + code);
+        else setStatus('Cast selection cancelled.');
+      }
+    }
   </script>
 </head>
 <body>
   <section class="panel">
     <h1>Home Dashboard</h1>
-    <p>Launch the custom Home Dashboard receiver directly on the Chromecast.</p>
-    <div class="launch-row">
-      <google-cast-launcher></google-cast-launcher>
-      <div class="label">Click this Cast icon</div>
-    </div>
-    <div id="status">Loading Google Cast…</div>
+    <p>Launch our custom dashboard directly on the Chromecast. This does not mirror your browser tab.</p>
+    <button id="launch" onclick="launch()" disabled>Waiting for Kitchen TV…</button>
+    <div id="status">Loading Google Cast SDK…</div>
     <div class="small">Custom Receiver App ID: 03E19645</div>
   </section>
   <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
