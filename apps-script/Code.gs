@@ -1,4 +1,4 @@
-const DASHBOARD_KEY = 'REPLACE_WITH_YOUR_EXISTING_DASHBOARD_KEY';
+const DASHBOARD_KEY = 'HD-8f4kQ29vM7xP2L6cN5sW';
 
 // Household calendar priority: lower number = shown first when a day is crowded.
 const DASHBOARD_CALENDARS = [
