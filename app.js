@@ -37,6 +37,17 @@ function eventColor(event) {
   return CALENDAR_COLORS[event.calendar] || CALENDAR_COLORS.Other;
 }
 
+function formatRangeTitle(start, end) {
+  const sameYear = start.getFullYear() === end.getFullYear();
+  const startText = start.toLocaleDateString('en-US', {
+    month: 'long', day: 'numeric', year: sameYear ? undefined : 'numeric'
+  });
+  const endText = end.toLocaleDateString('en-US', {
+    month: 'long', day: 'numeric', year: 'numeric'
+  });
+  return `${startText} – ${endText}`;
+}
+
 const events = sampleEvents.map(event => ({ ...event, date: eventDate(event.offset) }));
 
 function updateClock() {
@@ -53,21 +64,27 @@ function updateClock() {
 
 function renderCalendar() {
   const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  document.getElementById('monthTitle').textContent = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  now.setHours(12, 0, 0, 0);
 
-  const first = new Date(year, month, 1);
-  const start = new Date(year, month, 1 - first.getDay());
+  // Keep the familiar Sun-Sat calendar columns while showing only four weeks.
+  const start = new Date(now);
+  start.setDate(now.getDate() - now.getDay());
+
+  const end = new Date(start);
+  end.setDate(start.getDate() + 27);
+
+  document.getElementById('monthTitle').textContent = formatRangeTitle(start, end);
+
   const grid = document.getElementById('calendarGrid');
   grid.innerHTML = '';
 
-  for (let i = 0; i < 42; i++) {
+  for (let i = 0; i < 28; i++) {
     const date = new Date(start);
     date.setDate(start.getDate() + i);
+
     const cell = document.createElement('div');
     cell.className = 'day';
-    if (date.getMonth() !== month) cell.classList.add('outside');
+    if (date.getMonth() !== now.getMonth()) cell.classList.add('outside');
     if (formatDateKey(date) === formatDateKey(now)) cell.classList.add('today');
 
     const num = document.createElement('div');
@@ -81,7 +98,7 @@ function renderCalendar() {
 
     const eventBox = document.createElement('div');
     eventBox.className = 'day-events';
-    matches.slice(0, 5).forEach(event => {
+    matches.slice(0, 7).forEach(event => {
       const row = document.createElement('div');
       row.className = 'event-row';
       row.innerHTML = `
@@ -93,10 +110,10 @@ function renderCalendar() {
       eventBox.appendChild(row);
     });
 
-    if (matches.length > 5) {
+    if (matches.length > 7) {
       const more = document.createElement('div');
       more.className = 'more-events';
-      more.textContent = `+${matches.length - 5} more`;
+      more.textContent = `+${matches.length - 7} more`;
       eventBox.appendChild(more);
     }
 
