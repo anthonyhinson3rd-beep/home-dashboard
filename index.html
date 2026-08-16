@@ -10,15 +10,14 @@
   <main class="dashboard" aria-label="Home dashboard">
     <header class="topbar card">
       <section class="weather-summary" aria-label="Current weather">
-        <div id="weatherIcon" class="weather-icon">☀️</div>
+        <div id="weatherIcon" class="weather-icon"></div>
         <div><div id="weatherTemp" class="weather-temp">--°</div><div id="weatherText" class="weather-text">Loading weather…</div></div>
       </section>
       <div class="top-divider"></div>
       <div id="clock" class="clock"></div>
       <div class="top-divider"></div>
       <div class="date-stack"><div id="weekday" class="weekday"></div><div id="date" class="date"></div></div>
-      <div class="top-spacer"></div>
-      <div class="location">📍 <span id="locationLabel">Blacksburg, VA</span></div>
+      <div id="forecast" class="top-forecast" aria-label="Five day forecast"></div>
     </header>
 
     <section class="content-grid">
@@ -29,8 +28,7 @@
       </section>
 
       <aside class="side-column">
-        <section class="card agenda-card"><div class="card-header"><h2>Upcoming</h2></div><div id="agenda" class="agenda"></div></section>
-        <section class="card forecast-card"><div class="card-header"><h2>Forecast</h2></div><div id="forecast" class="forecast"></div></section>
+        <section class="card agenda-card"><div class="card-header"><h2>Today & Tomorrow</h2></div><div id="agenda" class="agenda"></div></section>
         <section class="card sports-card"><div class="sports-title">Sports</div><div id="sports" class="sports"></div></section>
       </aside>
     </section>
