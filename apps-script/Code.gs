@@ -77,6 +77,7 @@ function doGet(e) {
 
 function readCalendars_(configs, start, end, sportsMode) {
   const output = [];
+  const displayTimeZone = Session.getScriptTimeZone();
 
   configs.filter(c => c.enabled).forEach(config => {
     const calendar = config.id === 'primary'
@@ -85,10 +86,22 @@ function readCalendars_(configs, start, end, sportsMode) {
 
     if (!calendar) return;
 
+    // All-day events represent a calendar DATE, not a moment in time. Formatting
+    // an all-day event in the script timezone can move it backward/forward one
+    // day when a shared calendar uses a different timezone. Use that calendar's
+    // own timezone for all-day dates, while timed events continue to display in
+    // the dashboard/script timezone.
+    let calendarTimeZone = displayTimeZone;
+    try {
+      calendarTimeZone = calendar.getTimeZone() || displayTimeZone;
+    } catch (_) {}
+
     calendar.getEvents(start, end).forEach(event => {
       const allDay = event.isAllDayEvent();
       const eventStart = event.getStartTime();
       const eventEnd = event.getEndTime();
+      const dateTimeZone = allDay ? calendarTimeZone : displayTimeZone;
+
       output.push({
         title: event.getTitle(),
         calendar: config.label,
@@ -97,10 +110,10 @@ function readCalendars_(configs, start, end, sportsMode) {
         priority: config.priority || 99,
         allDay: allDay,
         important: allDay,
-        date: Utilities.formatDate(eventStart, Session.getScriptTimeZone(), 'yyyy-MM-dd'),
+        date: Utilities.formatDate(eventStart, dateTimeZone, 'yyyy-MM-dd'),
         start: allDay ? null : eventStart.toISOString(),
         end: allDay ? null : eventEnd.toISOString(),
-        time: allDay ? '' : Utilities.formatDate(eventStart, Session.getScriptTimeZone(), 'h:mm a')
+        time: allDay ? '' : Utilities.formatDate(eventStart, displayTimeZone, 'h:mm a')
       });
     });
   });
