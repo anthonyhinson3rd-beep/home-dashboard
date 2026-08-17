@@ -40,6 +40,18 @@
     return 'Session';
   };
 
+  window.f1WeekendName = function (title) {
+    let t = String(title || '').trim();
+    t = t.replace(/^(FP1|FP2|FP3|SRQ|SR|Q|GP)\s*:\s*/i, '');
+    t = t.replace(/^Formula\s*1\s*/i, '');
+    t = t.replace(/^F1\s*/i, '');
+    t = t.replace(/^20\d{2}\s+/i, '');
+    t = t.replace(/\s+/g, ' ').trim();
+    const gp = t.match(/(.+?Grand Prix)/i);
+    if (gp) return gp[1].replace(/\b\w/g, c => c.toUpperCase());
+    return t || 'Grand Prix Weekend';
+  };
+
   window.renderSports = function () {
     const box = document.getElementById('sports');
     if (!box) return;
@@ -55,10 +67,14 @@
     f1Card.className = 'sport-card f1-card';
 
     if (f1.length) {
+      const weekend = window.f1WeekendName(f1[0].title);
       f1Card.innerHTML = `
         <div class="sport-head compact-f1-head">
           <div class="sport-logo f1-logo" aria-label="Formula 1"></div>
-          <div class="sport-name">Formula 1</div>
+          <div>
+            <div class="sport-name">Formula 1</div>
+            <div class="sport-subtitle">${weekend}</div>
+          </div>
         </div>
         <div class="f1-sessions compact-f1-sessions">
           ${f1.map(e => `
