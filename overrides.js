@@ -2,6 +2,43 @@
 (function () {
   const STORAGE_KEY = 'homeDashboardCalendarKey';
 
+  // Keep the display awake while the dashboard is actually visible. Vega's
+  // WebView is Chromium-based, so use the standard Screen Wake Lock API when
+  // available. The browser automatically releases the lock when hidden; we
+  // request it again whenever the dashboard becomes visible/active.
+  let screenWakeLock = null;
+
+  async function requestScreenWakeLock() {
+    if (!('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
+
+    try {
+      if (screenWakeLock && !screenWakeLock.released) return;
+      screenWakeLock = await navigator.wakeLock.request('screen');
+      console.info('[HomeDashboard] Screen wake lock acquired');
+      screenWakeLock.addEventListener('release', () => {
+        console.info('[HomeDashboard] Screen wake lock released');
+        screenWakeLock = null;
+      });
+    } catch (error) {
+      console.warn('[HomeDashboard] Screen wake lock unavailable:', error);
+      screenWakeLock = null;
+    }
+  }
+
+  requestScreenWakeLock();
+  window.addEventListener('load', requestScreenWakeLock);
+  window.addEventListener('focus', requestScreenWakeLock);
+  window.addEventListener('pageshow', requestScreenWakeLock);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      setTimeout(requestScreenWakeLock, 250);
+    }
+  });
+
+  // Periodically re-check in case the OS/browser released the lock without a
+  // visibility transition.
+  setInterval(requestScreenWakeLock, 30 * 1000);
+
   const originalSetter = window.setHomeDashboardCalendarKey;
   window.setHomeDashboardCalendarKey = function (key) {
     const value = String(key || '');
