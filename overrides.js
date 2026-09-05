@@ -11,6 +11,20 @@
     if (typeof originalSetter === 'function') originalSetter(value);
   };
 
+  // Fire TV one-time bootstrap: accept ?key= once, store it locally, then
+  // remove the key from the visible URL so normal refreshes use localStorage.
+  try {
+    const params = new URLSearchParams(location.search);
+    const bootstrapKey = params.get('key') || '';
+    if (bootstrapKey) {
+      localStorage.setItem(STORAGE_KEY, bootstrapKey);
+      window.HOME_DASHBOARD_CALENDAR_KEY = bootstrapKey;
+      params.delete('key');
+      const clean = `${location.pathname}${params.toString() ? `?${params.toString()}` : ''}${location.hash}`;
+      history.replaceState(null, '', clean);
+    }
+  } catch (_) {}
+
   try {
     const savedKey = localStorage.getItem(STORAGE_KEY) || '';
     if (savedKey) {
