@@ -1,1 +1,1 @@
-pychromecast>=14.0.0
+# Standard library only
