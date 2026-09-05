@@ -11,7 +11,7 @@ DASHBOARD_COMPONENT = os.getenv(
     "DASHBOARD_COMPONENT", "com.amazondeveloper.homedashboard.main"
 )
 HOME_COMPONENT = os.getenv(
-    "HOME_COMPONENT", "com.amazon.smptlighthouse.launcher.main"
+    "HOME_COMPONENT", "com.amazon.smplighthouse.launcher.main"
 )
 CHECK_SECONDS = int(os.getenv("CHECK_SECONDS", "10"))
 HOME_RETURN_SECONDS = int(os.getenv("HOME_RETURN_SECONDS", "60"))
