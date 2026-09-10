@@ -100,3 +100,64 @@
   .agenda-card .timeline-event-time{font-size:9.5px!important}
   .agenda-card .timeline-event-title{font-size:11.5px!important}
 }
+
+/* Stacked calendar entries: give titles the full day width. */
+.calendar-grid .day { padding: 5px 6px; }
+.calendar-grid .day-events { gap: 5px; margin-top: 3px; }
+.calendar-grid .event-row:not(.all-day) {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1px;
+  min-width: 0;
+  font-size: 16px;
+  line-height: 1.15;
+}
+.calendar-grid .event-wrap { gap: 4px; }
+.calendar-grid .event-dot { flex: 0 0 auto; width: 7px; height: 7px; }
+.calendar-grid .event-time { font-size: 12.5px; line-height: 1.1; }
+.calendar-grid .event-title,
+.calendar-grid .event-row.all-day {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.calendar-grid .event-title { font-weight: 600; }
+.calendar-grid .event-row.all-day { font-size: 15px; line-height: 1.15; padding: 3px 5px; }
+.calendar-grid .busy-day .event-title,
+.calendar-grid .busy-day .event-row.all-day { -webkit-line-clamp: 1; }
+.calendar-grid .busy-day .day-events { gap: 3px; }
+.calendar-grid .packed-day .event-row:not(.all-day) { font-size: 14.5px; gap: 0; }
+.calendar-grid .packed-day .event-time { font-size: 11.5px; }
+.calendar-grid .packed-day .event-row.all-day { font-size: 14px; }
+.calendar-grid .packed-day .day-events { gap: 2px; }
+.agenda-card .timeline-event-title {
+  font-size: 16px!important;
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
+}
+@media(max-height:800px), (max-width:1100px) {
+  .calendar-grid .day { padding: 3px 5px; }
+  .calendar-grid .day-number { width: 25px; height: 25px; font-size: 17px; }
+  .calendar-grid .day-events { gap: 3px; margin-top: 2px; }
+  .calendar-grid .event-row:not(.all-day) { font-size: 13px; }
+  .calendar-grid .event-time { font-size: 10px; }
+  .calendar-grid .event-row.all-day { font-size: 12px; padding: 2px 4px; }
+  .calendar-grid .busy-day .day-events { gap: 2px; }
+  .calendar-grid .packed-day .event-row:not(.all-day) { font-size: 11.5px; }
+  .calendar-grid .packed-day .event-time { font-size: 9.5px; }
+  .calendar-grid .packed-day .event-row.all-day { font-size: 11px; }
+  .calendar-grid .packed-day .day-events { gap: 1px; }
+  .agenda-card .timeline-event-title { font-size: 13px!important; }
+}
+
+/* Keep unusually busy days accessible on smaller TV viewports. */
+.calendar-grid .day { display:flex; flex-direction:column; min-width:0; }
+.calendar-grid .day-number { flex-shrink:0; }
+.calendar-grid .day-events { min-height:0; overflow-y:auto; overflow-x:hidden; scrollbar-width:thin; }
