@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Home Dashboard</title>
   <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="firetv.css?v=20260910-stacked-events" />
+  <link rel="stylesheet" href="firetv.css?v=20260910-chronological-legend" />
 </head>
 <body>
   <main class="dashboard" aria-label="Home dashboard">
@@ -34,9 +34,9 @@
       </aside>
     </section>
 
-    <footer class="footer"><span id="status">Dashboard online</span><span>Calendar refreshes every minute ↻</span></footer>
+    <footer class="footer"><span id="status">Dashboard online</span><div id="calendarLegend" class="calendar-legend" aria-label="Calendar colors"></div><span class="footer-refresh">Calendar refreshes every minute ↻</span></footer>
   </main>
   <script src="weather-location.js"></script>
-  <script src="app.js?v=20260910-stacked-events"></script>
+  <script src="app.js?v=20260910-chronological-legend"></script>
 </body>
 </html>
